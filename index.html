@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Bouncing Ball</title>
+
+    <style>
+        body {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.87);
+        }
+
+        #svgContainer {
+            background: black;
+        }
+
+        #scoreBoard {
+            position: absolute;
+            top: 10vh;
+            width: 15vw;
+            margin: auto;
+            font-size: xx-large;
+            color: white;
+            text-align: center;
+        }
+
+        #playerOneScore {
+            color: cornflowerblue;
+            font-weight: bold;
+        }
+
+        #playerTwoScore {
+            color: brown;
+            font-weight: bold;
+        }
+
+        #versus {
+            font-size: 3vh;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="scoreBoard">
+        <span id="playerOneScore">0</span>
+        <span id="versus">x</span>
+        <span id="playerTwoScore">0</span>
+    </div>
+
+    <svg id='svgContainer' width="772" height="384">
+        <rect x="-20" y="92" width="40" height="200" rx="40" fill="#232323" />
+        <rect x="752" y="92" width="40" height="200" rx="40" fill="#232323" />
+        <circle id='ball' cx="386 cy=" 192" r="15" fill="white" />
+        <rect id='playerOne' x="0" y="147" width="25" height="90" fill="white"></rect>
+        <rect id='playerTwo' x="747" y="147" width="25" height="90" fill="white"></rect>
+
+    </svg>
+
+    <script>
+
+        model =
+        {
+            ball:
+            {
+                "cx": 386,
+                "cy": 187,
+                "vx": 6,
+                "vy": 2,
+                "r": 15
+            },
+            playerOne: {
+                "x": 0,
+                "y": 192,
+                "width": 25,
+                "height": 90,
+                "upOrDown": 0,
+                "color": "white",
+                "colorCounter": 0
+            },
+            playerTwo: {
+                "x": 747,
+                "y": 192,
+                "width": 25,
+                "height": 90,
+                "upOrDown": 0,
+                "color": "white",
+                "colorCounter": 0
+            },
+            scoreOne: 0,
+            scoreTwo: 0
+        }
+
+
+        context = document.querySelector('#svgContainer');
+
+        function update() {
+
+            let ball = this['ball'];
+            let playerOne = this['playerOne'];
+            let playerTwo = this['playerTwo'];
+
+            //goal y:92 -> y:292 
+
+            switch (true) {
+                case (ball['cx'] - ball['r']) >= 772: //playerOne scores
+                    document.getElementById('playerOneScore').innerText = ++this.scoreOne;
+                    this.resetAnimation();
+                    break;
+                case (ball['cx'] + ball['r']) <= 0: //playerTwo scores
+                    document.getElementById('playerTwoScore').innerText = ++this.scoreTwo;
+                    this.resetAnimation();
+                    break;
+                case ball['cx'] >= (772 - ball['r']): //ball hits right wall
+                    if ((ball['cy'] + ball['r']) < 92 || (ball['cy'] - ball['r']) > 292)
+                        ball['vx'] = -Math.abs(ball['vx']);
+                    break;
+                case ball['cy'] >= (384 - ball['r']): //ball hits bottom wall
+                    ball['vy'] = -Math.abs(ball['vy']);
+                    break;
+                case ball['cx'] <= (0 + ball['r']): //ball hits left wall
+                    if ((ball['cy'] + ball['r']) < 92 || (ball['cy'] - ball['r']) > 292)
+                        ball['vx'] = Math.abs(ball['vx']);
+                    break;
+                case ball['cy'] <= (0 + ball['r']): //ball hits top wall
+                    ball['vy'] = Math.abs(ball['vy']);
+                    break;
+                default: break;
+            }
+
+
+            //ball  hits player one
+            if ((ball['cx'] - ball['r']) <= playerOne['width'] &&
+                (ball['cy'] + ball['r']) > (playerOne['y']) &&
+                (ball['cy'] - ball['r']) < (playerOne['y'] + playerOne['height'])) {
+                playerOne['color'] = "green";
+                playerOne['colorCounter'] = 10;
+                ball['vx'] = ball['vx'] * (-1);
+                ball['cx'] = playerOne['width'] + 1 + ball['r'];
+
+                switch (playerOne['upOrDown']) {
+
+                    case 1: //player moving up
+                        ball['vy'] = Math.abs(ball['vy']);
+                        break;
+
+
+                    case -1: //player moving down
+                        ball['vy'] = -Math.abs(ball['vy']);
+                        break;
+
+                    default:
+                        break;
+
+                }
+
+
+
+            }
+
+            if (playerOne['colorCounter'] == 0) {
+                playerOne['color'] = 'white';
+            }
+            else {
+                playerOne['colorCounter']--;
+            }
+
+            if ((ball['cx'] + ball['r']) >= (772 - playerTwo['width']) &&
+                (ball['cy'] + ball['r']) > (playerTwo['y']) &&
+                (ball['cy'] - ball['r']) < (playerTwo['y'] + playerTwo['height'])) {
+                playerTwo['color'] = "green";
+                playerTwo['colorCounter'] = 10;
+                ball['vx'] = ball['vx'] * (-1);
+                ball['cx'] = 771 - playerTwo['width'] - ball['r'];
+            }
+
+            if (playerTwo['colorCounter'] == 0) {
+                playerTwo['color'] = 'white';
+            }
+            else {
+                playerTwo['colorCounter']--;
+            }
+
+
+
+            ball['cx'] += ball['vx'];
+            ball['cy'] += ball['vy'];
+
+            switch (this['playerOne']['upOrDown']) {
+                case 1:
+                    if (this['playerOne']['y'] >= 3) {
+                        this['playerOne']['y'] = this['playerOne']['y'] - 2;
+                    }
+                    break;
+                case -1:
+                    if (this['playerOne']['y'] <= 295) {
+                        this['playerOne']['y'] = this['playerOne']['y'] + 2;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+
+            switch (true) {
+
+                case playerTwo['y'] + (playerTwo['height'] / 2) > ball['cy']:
+                    if (Math.floor(Math.random() * 6) < 3)
+                        playerTwo['y'] = playerTwo['y'] - 2;
+                    break;
+                case playerTwo['y'] + (playerTwo['height'] / 2) < ball['cy']:
+                    if (Math.floor(Math.random() * 6) < 3)
+                        playerTwo['y'] = playerTwo['y'] + 2;
+                    break;
+                default: break;
+
+            }
+
+
+
+
+        }
+
+        model.update = update;
+
+        function playerOneUp() {
+            model['playerOne']['upOrDown'] = 1;
+        }
+
+        model.playerOneUp = playerOneUp;
+
+        function playerOneDown() {
+            model['playerOne']['upOrDown'] = -1;
+        }
+
+        model.playerOneDown = playerOneDown;
+
+        function playerOneStop() {
+            model['playerOne']['upOrDown'] = 0;
+        }
+
+        model.playerOneStop = playerOneStop;
+
+
+        function render(model) {
+            let ball = document.querySelector("#ball");
+            ball.setAttribute("cx", model['ball']['cx']);
+            ball.setAttribute("cy", model['ball']['cy']);
+            let playerOne = document.querySelector("#playerOne");
+            playerOne.setAttribute("y", model['playerOne']['y']);
+            playerOne.setAttribute("fill", model['playerOne']['color']);
+            let playerTwo = document.querySelector("#playerTwo");
+            playerTwo.setAttribute("y", model['playerTwo']['y']);
+            playerTwo.setAttribute("fill", model['playerTwo']['color']);
+
+        }
+
+        context.render = render;
+
+        function main() {
+
+            document.addEventListener("keydown", (e) => {
+                switch (e.key) {
+                    case "w": case "W": model.playerOneUp(); break;
+                    case "s": case "S": model.playerOneDown(); break;
+                    default: model.playerOneStop(); break;
+                }
+            });
+
+            let step = (ts) => {
+                context.render(model);
+                model.update();
+                requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function resetAnimation() {
+            this.ball['cx'] = 386;
+            this.ball['cy'] = 187;
+            if (Math.floor(Math.random() * 2) == 1) {
+                this.ball['vx'] = Math.abs(this.ball['vx']);;
+            }
+            else {
+                this.ball['vx'] = -Math.abs(this.ball['vx']);
+            }
+
+            if (Math.floor(Math.random() * 2) == 1) {
+                this.ball['vy'] = Math.abs(this.ball['vy']);
+            }
+            else {
+                this.ball['vy'] = -Math.abs(this.ball['vy']);
+            }
+        }
+
+        model.resetAnimation = resetAnimation;
+
+    </script>
+    <script>main()</script>
+</body>
+
+</html>
