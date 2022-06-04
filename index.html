@@ -6,6 +6,8 @@
     <title>Bouncing Ball</title>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
         body {
             height: 100vh;
             width: 100vw;
@@ -42,16 +44,62 @@
         #versus {
             font-size: 3vh;
         }
+
+        .waviy {
+            position: absolute;
+            display: none;
+            -webkit-box-reflect: below -20px linear-gradient(transparent, rgba(0, 0, 0, .2));
+            font-size: 60px;
+        }
+
+        .waviy span {
+            font-family: 'Alfa Slab One', cursive;
+            position: relative;
+            display: inline-block;
+            color: #fff;
+            text-transform: uppercase;
+            animation: waviy 1s infinite;
+            animation-delay: calc(.1s * var(--i));
+
+        }
+
+        @keyframes waviy {
+
+            0%,
+            40%,
+            100% {
+                transform: translateY(0)
+            }
+
+            20% {
+                transform: translateY(-20px)
+            }
+        }
     </style>
 </head>
 
 <body>
+
+    <div class="waviy">
+        <span style="--i:1">G</span>
+        <span style="--i:2">O</span>
+        <span style="--i:3">O</span>
+        <span style="--i:4">O</span>
+        <span style="--i:5">O</span>
+        <span style="--i:6">A</span>
+        <span style="--i:7">A</span>
+        <span style="--i:8">A</span>
+        <span style="--i:9">A</span>
+        <span style="--i:10">L</span>
+
+    </div>
 
     <div id="scoreBoard">
         <span id="playerOneScore">0</span>
         <span id="versus">x</span>
         <span id="playerTwoScore">0</span>
     </div>
+
 
     <svg id='svgContainer' width="772" height="384">
         <rect x="-20" y="92" width="40" height="200" rx="40" fill="#232323" />
@@ -70,7 +118,7 @@
             {
                 "cx": 386,
                 "cy": 187,
-                "vx": 6,
+                "vx": 6.5,
                 "vy": 2,
                 "r": 15
             },
@@ -93,7 +141,8 @@
                 "colorCounter": 0
             },
             scoreOne: 0,
-            scoreTwo: 0
+            scoreTwo: 0,
+            paused: false
         }
 
 
@@ -110,21 +159,23 @@
             switch (true) {
                 case (ball['cx'] - ball['r']) >= 772: //playerOne scores
                     document.getElementById('playerOneScore').innerText = ++this.scoreOne;
+                    this.paused = true;
                     this.resetAnimation();
                     break;
                 case (ball['cx'] + ball['r']) <= 0: //playerTwo scores
                     document.getElementById('playerTwoScore').innerText = ++this.scoreTwo;
+                    this.paused = true;
                     this.resetAnimation();
                     break;
                 case ball['cx'] >= (772 - ball['r']): //ball hits right wall
-                    if ((ball['cy'] + ball['r']) < 92 || (ball['cy'] - ball['r']) > 292)
+                    if (ball['cy'] < 92 || ball['cy'] > 292)
                         ball['vx'] = -Math.abs(ball['vx']);
                     break;
                 case ball['cy'] >= (384 - ball['r']): //ball hits bottom wall
                     ball['vy'] = -Math.abs(ball['vy']);
                     break;
                 case ball['cx'] <= (0 + ball['r']): //ball hits left wall
-                    if ((ball['cy'] + ball['r']) < 92 || (ball['cy'] - ball['r']) > 292)
+                    if (ball['cy'] < 92 || ball['cy'] > 292)
                         ball['vx'] = Math.abs(ball['vx']);
                     break;
                 case ball['cy'] <= (0 + ball['r']): //ball hits top wall
@@ -177,6 +228,20 @@
                 playerTwo['colorCounter'] = 10;
                 ball['vx'] = ball['vx'] * (-1);
                 ball['cx'] = 771 - playerTwo['width'] - ball['r'];
+
+                switch (playerTwo['upOrDown']) {
+                    case 1:
+                        ball['vy'] = Math.abs(ball['vy']);
+                        break;
+
+                    case -1:
+                        ball['vy'] = -Math.abs(ball['vy']);
+                        break;
+
+                    default:
+                        break;
+                }
+
             }
 
             if (playerTwo['colorCounter'] == 0) {
@@ -210,12 +275,14 @@
             switch (true) {
 
                 case playerTwo['y'] + (playerTwo['height'] / 2) > ball['cy']:
-                    if (Math.floor(Math.random() * 6) < 3)
+                    if (Math.floor(Math.random() * 2) < 1)
                         playerTwo['y'] = playerTwo['y'] - 2;
+                    playerTwo['upOrDown'] = 1;
                     break;
                 case playerTwo['y'] + (playerTwo['height'] / 2) < ball['cy']:
-                    if (Math.floor(Math.random() * 6) < 3)
+                    if (Math.floor(Math.random() * 2) < 1)
                         playerTwo['y'] = playerTwo['y'] + 2;
+                    playerTwo['upOrDown'] = -1;
                     break;
                 default: break;
 
@@ -262,24 +329,6 @@
 
         context.render = render;
 
-        function main() {
-
-            document.addEventListener("keydown", (e) => {
-                switch (e.key) {
-                    case "w": case "W": model.playerOneUp(); break;
-                    case "s": case "S": model.playerOneDown(); break;
-                    default: model.playerOneStop(); break;
-                }
-            });
-
-            let step = (ts) => {
-                context.render(model);
-                model.update();
-                requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
-
         function resetAnimation() {
             this.ball['cx'] = 386;
             this.ball['cy'] = 187;
@@ -299,6 +348,65 @@
         }
 
         model.resetAnimation = resetAnimation;
+
+
+        function main() {
+
+            document.addEventListener("keydown", (e) => {
+                switch (e.key) {
+                    case "w": case "W": model.playerOneUp(); break;
+                    case "s": case "S": model.playerOneDown(); break;
+                    default: model.playerOneStop(); break;
+                }
+            });
+
+            document.addEventListener("touchstart", (e) => {
+                [...e.changedTouches].forEach(touch =>{
+                    let middlehalf = window.innerHeight / 2;
+                switch (true) {
+                    case touch.pageY < middlehalf:
+                        model.playerOneUp(); break;
+                    case touch.pageY > middlehalf:
+                        model.playerOneDown(); break;
+                    default: model.playerOneStop(); break;
+                }
+                })      
+            });
+
+            document.addEventListener("touchmove", (e) => {
+                [...e.changedTouches].forEach(touch =>{
+                    let middlehalf = window.innerHeight / 2;
+                switch (true) {
+                    case touch.pageY < middlehalf:
+                        model.playerOneUp(); break;
+                    case touch.pageY > middlehalf:
+                        model.playerOneDown(); break;
+                    default: model.playerOneStop(); break;
+                }
+                })
+            });
+
+            document.addEventListener("touchend", (e) => {
+                model.playerOneStop();
+            });
+
+            let step = (ts) => {
+                context.render(model);
+                model.update();
+                if (!model.paused)
+                    requestAnimationFrame(step);
+                else {
+                    document.querySelector('.waviy').style.display = "inherit";
+                    setTimeout(
+                        () => {
+                            model.paused = false;
+                            document.querySelector('.waviy').style.display = "none";
+                            requestAnimationFrame(step);
+                        }, 2200);
+                }
+            }
+            requestAnimationFrame(step);
+        }
 
     </script>
     <script>main()</script>
